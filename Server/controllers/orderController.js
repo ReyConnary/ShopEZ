@@ -98,17 +98,51 @@ exports.getAllOrders = async (req, res) => {
 };
 
 // PUT /api/orders/:id/status  (admin: update order status)
+// Cancelling an order restocks every item's variant (undoing the deduction
+// made at checkout). Restock only fires on the pending→cancelled transition,
+// so re-saving an already-cancelled order never double-restocks it, and
+// cancelling an order that was never paid-for-stock twice is impossible.
 exports.updateOrderStatus = async (req, res) => {
+  const session = await mongoose.startSession();
   try {
     const { status } = req.body;
     const allowed = ["pending", "processing", "shipped", "delivered", "cancelled"];
     if (!allowed.includes(status)) {
       return res.status(400).json({ message: `status must be one of: ${allowed.join(", ")}` });
     }
-    const order = await Orders.findByIdAndUpdate(req.params.id, { status }, { new: true });
-    if (!order) return res.status(404).json({ message: "Order not found." });
+
+    session.startTransaction();
+
+    const order = await Orders.findById(req.params.id).session(session);
+    if (!order) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ message: "Order not found." });
+    }
+
+    const isNewlyCancelled = status === "cancelled" && order.status !== "cancelled";
+
+    if (isNewlyCancelled) {
+      for (const item of order.items) {
+        const product = await Product.findById(item.productId).session(session);
+        if (!product) continue; // product was hard-deleted elsewhere; nothing to restock onto
+        const variant = product.variants.id(item.variantId);
+        if (!variant) continue; // variant no longer exists; nothing to restock onto
+        variant.stock += item.quantity;
+        await product.save({ session });
+      }
+    }
+
+    order.status = status;
+    await order.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
     res.json(order);
   } catch (err) {
+    await session.abortTransaction().catch(() => {});
+    session.endSession();
     res.status(500).json({ message: "Failed to update order.", error: err.message });
   }
 };

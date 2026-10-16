@@ -1,7 +1,19 @@
 const Admin = require("../models/Admin");
 const User = require("../models/User");
 
-// GET /api/admin/config
+// GET /api/admin/public-config  (public — no auth; storefront reads this
+// for the banner and category filter, so it must be reachable by guests too)
+exports.getPublicConfig = async (req, res) => {
+  try {
+    let config = await Admin.findOne();
+    if (!config) config = await Admin.create({ categories: [], banner: "" });
+    res.json({ categories: config.categories, banner: config.banner });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch store settings.", error: err.message });
+  }
+};
+
+// GET /api/admin/config  (admin only — same data, used by the Admin Settings form)
 exports.getConfig = async (req, res) => {
   try {
     let config = await Admin.findOne();

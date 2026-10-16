@@ -14,6 +14,7 @@ import AdminLayout from "./pages/admin/AdminLayout.jsx";
 import AdminProducts from "./pages/admin/AdminProducts.jsx";
 import AdminOrders from "./pages/admin/AdminOrders.jsx";
 import AdminUsers from "./pages/admin/AdminUsers.jsx";
+import AdminSettings from "./pages/admin/AdminSettings.jsx";
 
 export default function App() {
   return (
@@ -70,6 +71,7 @@ export default function App() {
             <Route path="products" element={<AdminProducts />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="users" element={<AdminUsers />} />
+            <Route path="settings" element={<AdminSettings />} />
           </Route>
         </Routes>
       </main>

@@ -36,7 +36,7 @@ export default function Checkout() {
       <ul>
         {cart.items.map((i) => (
           <li key={`${i.productId}-${i.variantId}`}>
-            {i.productName} ({i.sku}) × {i.quantity} - {formatRupiah(i.subtotal)}
+            {i.productName} ({i.sku}) × {i.quantity} — {formatRupiah(i.subtotal)}
           </li>
         ))}
       </ul>

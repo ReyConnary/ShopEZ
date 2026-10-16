@@ -57,7 +57,10 @@ export const api = {
   updateOrderStatus: (id, status, token) =>
     request(`/orders/${id}/status`, { method: "PUT", body: { status }, token }),
 
-  // Admin
+  // Admin / store settings
+  getPublicConfig: () => request("/admin/public-config"),
+  getAdminConfig: (token) => request("/admin/config", { token }),
+  updateAdminConfig: (data, token) => request("/admin/config", { method: "PUT", body: data, token }),
   adminUsers: (token) => request("/admin/users", { token }),
   setUserRole: (id, role, token) =>
     request(`/admin/users/${id}/role`, { method: "PUT", body: { role }, token }),

@@ -13,9 +13,17 @@ const emptyProduct = {
 export default function AdminProducts() {
   const { token } = useAuth();
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [form, setForm] = useState(emptyProduct);
   const [editingId, setEditingId] = useState(null); // null = create mode
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    api
+      .getAdminConfig(token)
+      .then((cfg) => setCategories(cfg.categories || []))
+      .catch(() => {});
+  }, [token]);
 
   function load() {
     api.getAllProductsAdmin().then(setProducts).catch((err) => setError(err.message));
@@ -113,12 +121,29 @@ export default function AdminProducts() {
           onChange={(e) => setForm({ ...form, name: e.target.value })}
           required
         />
-        <input
-          placeholder="Category"
-          value={form.category}
-          onChange={(e) => setForm({ ...form, category: e.target.value })}
-          required
-        />
+        {categories.length > 0 ? (
+          <select
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            required
+          >
+            <option value="" disabled>
+              Select a category...
+            </option>
+            {categories.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            placeholder="Category (define some under Admin → Settings first)"
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            required
+          />
+        )}
         <input
           placeholder="Image URL"
           value={form.image}

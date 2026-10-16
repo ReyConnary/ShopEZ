@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { api } from "../../api";
+import { formatRupiah } from "../../utils/currency";
 
 const statuses = ["pending", "processing", "shipped", "delivered", "cancelled"];
 
@@ -37,7 +38,7 @@ export default function AdminOrders() {
             <tr key={o._id}>
               <td>#{o._id.slice(-6)}</td>
               <td>{o.userId?.username || o.userId?.email || o.userId}</td>
-              <td>{o.totalAmount.toLocaleString()}</td>
+              <td>{formatRupiah(o.totalAmount)}</td>
               <td>
                 <select value={o.status} onChange={(e) => handleStatus(o._id, e.target.value)}>
                   {statuses.map((s) => (

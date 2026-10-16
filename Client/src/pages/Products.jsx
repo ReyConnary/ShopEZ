@@ -3,18 +3,40 @@ import { Link } from "react-router-dom";
 import { api } from "../api";
 import { formatRupiah } from "../utils/currency";
 
+const IMAGE_PATTERN = /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i;
+
 export default function Products() {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [banner, setBanner] = useState("");
   const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
-  async function load(query = "") {
+  useEffect(() => {
+    api
+      .getPublicConfig()
+      .then((cfg) => {
+        setCategories(cfg.categories || []);
+        setBanner(cfg.banner || "");
+      })
+      .catch(() => {
+        // No admin-defined categories/banner yet — page still works without them.
+      });
+  }, []);
+
+  const bannerIsImage = banner && IMAGE_PATTERN.test(banner);
+
+  async function load(query = search, cat = category) {
     setLoading(true);
     setError("");
     try {
-      const params = query ? `?search=${encodeURIComponent(query)}` : "";
-      const data = await api.getProducts(params);
+      const params = new URLSearchParams();
+      if (query) params.set("search", query);
+      if (cat) params.set("category", cat);
+      const qs = params.toString() ? `?${params.toString()}` : "";
+      const data = await api.getProducts(qs);
       setProducts(data);
     } catch (err) {
       setError(err.message);
@@ -24,16 +46,26 @@ export default function Products() {
   }
 
   useEffect(() => {
-    load();
+    load("", "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function handleSearch(e) {
     e.preventDefault();
-    load(search);
+    load(search, category);
+  }
+
+  function handleCategoryChange(e) {
+    const value = e.target.value;
+    setCategory(value);
+    load(search, value);
   }
 
   return (
     <div>
+      {bannerIsImage && <img src={banner} alt="Store banner" className="landing-banner-img" />}
+      {banner && !bannerIsImage && <div className="landing-banner-text">{banner}</div>}
+
       <h1>Products</h1>
       <form onSubmit={handleSearch} className="search-bar">
         <input
@@ -41,6 +73,16 @@ export default function Products() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+        {categories.length > 0 && (
+          <select value={category} onChange={handleCategoryChange}>
+            <option value="">All categories</option>
+            {categories.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        )}
         <button type="submit">Search</button>
       </form>
 

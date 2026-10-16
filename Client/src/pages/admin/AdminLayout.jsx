@@ -14,6 +14,9 @@ export default function AdminLayout() {
         <NavLink to="/admin/users" className={({ isActive }) => (isActive ? "active" : "")}>
           Users
         </NavLink>
+        <NavLink to="/admin/settings" className={({ isActive }) => (isActive ? "active" : "")}>
+          Settings
+        </NavLink>
       </div>
       <Outlet />
     </div>
